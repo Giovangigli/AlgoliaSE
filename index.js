@@ -1,5 +1,4 @@
-import algoliasearch from 'https://esm.sh/algoliasearch@4';
-import algoliasearchHelper from 'https://esm.sh/algoliasearch-helper@3';
+
 
 const APP_ID = 'PYR170J174';
 const SEARCH_API_KEY = '6a5c8d1640aa86a80b6821bfaa1b6f7b';
