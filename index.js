@@ -69,7 +69,7 @@ const DISCOVERY_RECIPES = {
     experienceTags: ['date night'],
     numericFilters: ['price_level>=2'],
     strategy:
-      'User intent is translated into an experience facet, a romantic discovery query, geo-context, and a slightly higher price tier.'
+      'Date Night translates romantic dining intent into an experience facet, discovery query, geo-context, and a slightly higher price tier.'
   },
   clientDinner: {
     label: 'Client dinner options',
@@ -77,7 +77,7 @@ const DISCOVERY_RECIPES = {
     experienceTags: ['date night'],
     numericFilters: ['stars_count>=4.4', 'reviews_count>=75'],
     strategy:
-      'Business dining prioritizes quality confidence: strong ratings, meaningful review volume, geo-context, and special-occasion intent.'
+      'Client Dinner prioritizes quality confidence: strong ratings, meaningful review volume, geo-context, and special-occasion intent.'
   },
   quickLunch: {
     label: 'Quick lunch nearby',
@@ -85,7 +85,15 @@ const DISCOVERY_RECIPES = {
     experienceTags: ['cheap eats'],
     numericFilters: ['price_level<=2'],
     strategy:
-      'Quick lunch favors nearby, casual, lower-price restaurants while keeping Algolia relevance and geo-ranking active.'
+      'Quick Lunch favors nearby, casual, lower-price restaurants while keeping Algolia relevance and geo-ranking active.'
+  },
+  wineBar: {
+    label: 'Wine bars nearby',
+    query: 'wine bar drinks',
+    experienceTags: ['wine bar'],
+    numericFilters: [],
+    strategy:
+      'Wine Bar translates drink-led intent into an experience facet and discovery query while keeping geo-context and Algolia relevance active.'
   },
   hiddenGems: {
     label: 'Hidden gems nearby',
@@ -94,15 +102,7 @@ const DISCOVERY_RECIPES = {
     numericFilters: ['stars_count>=4.4', 'reviews_count<=90', 'reviews_count>0'],
     strategy:
       'Hidden Gems surfaces high-rated restaurants with lower review volume to avoid ranking only by popularity.'
-  },
-  wineBar: {
-  label: 'Wine bars nearby',
-  query: 'wine bar drinks',
-  experienceTags: ['wine bar'],
-  numericFilters: [],
-  strategy:
-    'Wine Bar translates drink-led intent into an experience facet and discovery query while keeping geo-context and Algolia relevance active.'
-}
+  }
 };
 
 const client = algoliasearch(APP_ID, SEARCH_API_KEY);
@@ -142,7 +142,10 @@ function escapeHtml(value = '') {
 
 function formatDistance(hit) {
   const meters = hit?._rankingInfo?.geoDistance;
-  if (typeof meters !== 'number') return null;
+
+  if (typeof meters !== 'number') {
+    return null;
+  }
 
   return meters < 1000
     ? `${Math.round(meters)}m away`
@@ -157,8 +160,13 @@ function explainHit(hit) {
   const reasons = [];
   const distance = formatDistance(hit);
 
-  if (distance) reasons.push(distance);
-  if (hit.food_type) reasons.push(`Matches ${hit.food_type}`);
+  if (distance) {
+    reasons.push(distance);
+  }
+
+  if (hit.food_type) {
+    reasons.push(`Matches ${hit.food_type}`);
+  }
 
   if (Array.isArray(hit.experience_tags) && hit.experience_tags.length) {
     reasons.push(`Intent signals: ${hit.experience_tags.slice(0, 2).join(', ')}`);
@@ -176,6 +184,8 @@ function explainHit(hit) {
     reasons.push('Matched to date-night intent');
   } else if (state.recipe === 'quickLunch') {
     reasons.push('Matched to casual nearby lunch intent');
+  } else if (state.recipe === 'wineBar') {
+    reasons.push('Matched to wine-bar intent');
   } else {
     reasons.push('Prioritized by proximity and relevance');
   }
@@ -248,6 +258,7 @@ function renderResults(results) {
       .join('');
 
     const imageUrl = getImageUrl(hit);
+
     const image = imageUrl
       ? `
         <img
@@ -389,7 +400,6 @@ function applyLocation(location, fromBrowser = false) {
 
 helper.on('result', ({ results }) => {
   renderFacets(results);
-  syncExperienceChips();
   renderResults(results);
 });
 
@@ -409,14 +419,17 @@ els.input.addEventListener('input', (event) => {
 
 document.addEventListener('click', (event) => {
   const recipeButton = event.target.closest('[data-recipe]');
+
   if (recipeButton) {
     applyRecipe(recipeButton.dataset.recipe);
   }
 
   const cuisineButton = event.target.closest('[data-cuisine]');
+
   if (cuisineButton) {
     helper.toggleFacetRefinement('food_type', cuisineButton.dataset.cuisine).search();
   }
+});
 
 els.clearFilters.addEventListener('click', () => {
   els.input.value = '';
