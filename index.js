@@ -317,11 +317,6 @@ function applyMode(mode) {
   helper.search();
 }
 
-function applyQuery(query) {
-  els.input.value = query;
-  helper.setQuery(query).search();
-}
-
 function applyLocation(location, fromBrowser = false) {
   state.location = location;
   state.hasBrowserLocation = fromBrowser;
