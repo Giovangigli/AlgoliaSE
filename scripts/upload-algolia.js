@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const fs = require('fs');
 const path = require('path');
 const algoliasearch = require('algoliasearch');
@@ -59,6 +60,7 @@ async function main() {
   });
 
   await index.replaceAllObjects(records, { safe: true });
+
   console.log(`Uploaded ${records.length} records to ${indexName}`);
 }
 
