@@ -59,7 +59,7 @@ const DEFAULT_RESTAURANT_IMAGE =
 const client = algoliasearch(APP_ID, SEARCH_API_KEY);
 const helper = algoliasearchHelper(client, INDEX_NAME, {
   hitsPerPage: 12,
-  disjunctiveFacets: ['food_type'],
+  disjunctiveFacets: ['food_type', 'experience_tags'],
   aroundRadius: 'all',
   getRankingInfo: true
 });
