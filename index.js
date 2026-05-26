@@ -65,7 +65,7 @@ const helper = algoliasearchHelper(client, INDEX_NAME, {
 });
 
 const state = {
-  mode: 'nearby',
+  recipe: 'nearby',
   location: DEFAULT_LOCATION,
   hasBrowserLocation: false
 };
@@ -77,7 +77,8 @@ const els = {
   meta: document.querySelector('#results-meta'),
   title: document.querySelector('#results-title'),
   geoStatus: document.querySelector('#geo-status'),
-  clearFilters: document.querySelector('#clear-filters')
+  clearFilters: document.querySelector('#clear-filters'),
+  strategyCopy: document.querySelector('#strategy-copy')
 };
 
 function escapeHtml(value = '') {
@@ -98,12 +99,8 @@ function formatDistance(hit) {
     : `${(meters / 1000).toFixed(1)}km away`;
 }
 
-function getModeLabel(mode) {
-  return {
-    nearby: 'Restaurants near you',
-    topRated: 'Top rated restaurants',
-    hiddenGems: 'Hidden gems nearby'
-  }[mode] || 'Restaurants near you';
+function getRecipe() {
+  return DISCOVERY_RECIPES[state.recipe] || DISCOVERY_RECIPES.nearby;
 }
 
 function explainHit(hit) {
@@ -119,13 +116,17 @@ function explainHit(hit) {
     reasons.push(`${hit.stars_count} stars from ${hit.reviews_count || 0} reviews`);
   }
 
-  if (state.mode === 'hiddenGems') {
-    reasons.push('High rating with lower review volume');
-  } else if (state.mode === 'topRated') {
-    reasons.push('Prioritized by rating confidence');
-  } else {
-    reasons.push('Prioritized by proximity and relevance');
-  }
+if (state.recipe === 'hiddenGems') {
+  reasons.push('High rating with lower review volume');
+} else if (state.recipe === 'clientDinner') {
+  reasons.push('Prioritized by rating confidence for business dining');
+} else if (state.recipe === 'dateNight') {
+  reasons.push('Matched to date-night intent');
+} else if (state.recipe === 'quickLunch') {
+  reasons.push('Matched to casual nearby lunch intent');
+} else {
+  reasons.push('Prioritized by proximity and relevance');
+}
 
   return reasons.slice(0, 4);
 }
@@ -133,14 +134,14 @@ function explainHit(hit) {
 function normalizeHits(hits = []) {
   const copy = [...hits];
 
-  if (state.mode === 'topRated') {
+  if (state.recipe === 'clientDinner') {
     return copy.sort((a, b) =>
       (b.stars_count || 0) - (a.stars_count || 0) ||
       (b.reviews_count || 0) - (a.reviews_count || 0)
     );
   }
 
-  if (state.mode === 'hiddenGems') {
+  if (state.recipe === 'hiddenGems') {
     return copy.sort((a, b) =>
       Number(Boolean(b.is_hidden_gem)) - Number(Boolean(a.is_hidden_gem)) ||
       (b.stars_count || 0) - (a.stars_count || 0) ||
@@ -169,11 +170,56 @@ function getImageUrl(hit) {
   return match?.url || DEFAULT_RESTAURANT_IMAGE;
 }
 
+const DISCOVERY_RECIPES = {
+  nearby: {
+    label: 'Restaurants near you',
+    query: '',
+    experienceTags: [],
+    numericFilters: [],
+    strategy:
+      'Nearby restaurants using geo-context, textual relevance, rating, and review confidence.'
+  },
+  dateNight: {
+    label: 'Date night restaurants',
+    query: 'date night romantic',
+    experienceTags: ['date night'],
+    numericFilters: ['price_level>=2'],
+    strategy:
+      'User intent is translated into an experience facet, a romantic discovery query, geo-context, and a slightly higher price tier.'
+  },
+  clientDinner: {
+    label: 'Client dinner options',
+    query: 'special occasion fine dining',
+    experienceTags: ['date night'],
+    numericFilters: ['stars_count>=4.4', 'reviews_count>=75'],
+    strategy:
+      'Business dining prioritizes quality confidence: strong ratings, meaningful review volume, geo-context, and special-occasion intent.'
+  },
+  quickLunch: {
+    label: 'Quick lunch nearby',
+    query: 'casual cheap eats',
+    experienceTags: ['cheap eats'],
+    numericFilters: ['price_level<=2'],
+    strategy:
+      'Quick lunch favors nearby, casual, lower-price restaurants while keeping Algolia relevance and geo-ranking active.'
+  },
+  hiddenGems: {
+    label: 'Hidden gems nearby',
+    query: 'hidden gem',
+    experienceTags: ['hidden gem'],
+    numericFilters: ['stars_count>=4.4', 'reviews_count<=90', 'reviews_count>0'],
+    strategy:
+      'Hidden Gems surfaces high-rated restaurants with lower review volume to avoid ranking only by popularity.'
+  }
+};
+
 function renderResults(results) {
   const hits = normalizeHits(Array.isArray(results?.hits) ? results.hits : []);
 
-  els.title.textContent = getModeLabel(state.mode);
-  els.meta.textContent = `${results?.nbHits?.toLocaleString?.() || 0} restaurants · ${results?.processingTimeMS || 0}ms · ${state.hasBrowserLocation ? 'browser location' : state.location.label}`;
+const recipe = getRecipe();
+els.title.textContent = recipe.label;
+els.strategyCopy.textContent = recipe.strategy;
+els.meta.textContent = `${results?.nbHits?.toLocaleString?.() || 0} restaurants · ${results?.processingTimeMS || 0}ms · ${state.hasBrowserLocation ? 'browser location' : state.location.label}`;
 
   if (!hits.length) {
     els.results.innerHTML = `
@@ -290,31 +336,26 @@ function renderFacets(results) {
   }).join('');
 }
 
-function applyMode(mode) {
-  state.mode = mode;
+function applyRecipe(recipeName) {
+  const recipe = DISCOVERY_RECIPES[recipeName] || DISCOVERY_RECIPES.nearby;
+  state.recipe = recipeName;
 
-  document.querySelectorAll('.mode-tab').forEach((button) => {
-    button.classList.toggle('is-active', button.dataset.mode === mode);
+  document.querySelectorAll('[data-recipe]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.recipe === recipeName);
   });
 
-  helper.setQueryParameter('numericFilters', []);
+  helper.clearRefinements('experience_tags');
 
-  if (mode === 'topRated') {
-    helper.setQueryParameter('numericFilters', [
-      'stars_count>=4.5',
-      'reviews_count>=75'
-    ]);
-  }
+  recipe.experienceTags.forEach((tag) => {
+    helper.addDisjunctiveFacetRefinement('experience_tags', tag);
+  });
 
-  if (mode === 'hiddenGems') {
-    helper.setQueryParameter('numericFilters', [
-      'stars_count>=4.4',
-      'reviews_count<=90',
-      'reviews_count>0'
-    ]);
-  }
+  helper
+    .setQuery(recipe.query)
+    .setQueryParameter('numericFilters', recipe.numericFilters)
+    .search();
 
-  helper.search();
+  els.input.value = recipe.query;
 }
 
 function applyLocation(location, fromBrowser = false) {
@@ -350,8 +391,8 @@ els.input.addEventListener('input', (event) => {
 });
 
 document.addEventListener('click', (event) => {
-  const modeButton = event.target.closest('[data-mode]');
-  if (modeButton) applyMode(modeButton.dataset.mode);
+  const recipeButton = event.target.closest('[data-recipe]');
+  if (recipeButton) applyRecipe(recipeButton.dataset.recipe);
 
   const cuisineButton = event.target.closest('[data-cuisine]');
   if (cuisineButton) {
@@ -359,7 +400,7 @@ document.addEventListener('click', (event) => {
   }
 
   const quickButton = event.target.closest('[data-quick]');
-  if (quickButton) applyMode(quickButton.dataset.quick);
+  if (quickButton) applyRecipe(quickButton.dataset.quick);
 
   const experienceButton = event.target.closest('[data-experience]');
   if (experienceButton) {
