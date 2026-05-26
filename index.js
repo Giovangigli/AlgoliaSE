@@ -10,6 +10,52 @@ const DEFAULT_LOCATION = {
   label: 'San Francisco fallback'
 };
 
+const CUISINE_IMAGES = [
+  {
+    match: ['italian', 'pizza', 'pasta'],
+    url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['sushi', 'japanese'],
+    url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['french'],
+    url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['seafood', 'fish'],
+    url: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['steak', 'steakhouse', 'grill'],
+    url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['mexican', 'latin', 'spanish'],
+    url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['indian'],
+    url: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['chinese', 'asian', 'thai', 'vietnamese'],
+    url: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['breakfast', 'brunch', 'cafe'],
+    url: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    match: ['bar', 'wine', 'pub'],
+    url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80'
+  }
+];
+
+const DEFAULT_RESTAURANT_IMAGE =
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
+
 const client = algoliasearch(APP_ID, SEARCH_API_KEY);
 const helper = algoliasearchHelper(client, INDEX_NAME, {
   hitsPerPage: 12,
@@ -106,7 +152,21 @@ function normalizeHits(hits = []) {
 }
 
 function getImageUrl(hit) {
-  return hit.image_url || hit.image || hit.picture_url || '';
+  const existingUrl = hit.image_url || hit.image || hit.picture_url;
+
+  if (existingUrl && existingUrl.startsWith('https://')) {
+    return existingUrl;
+  }
+
+  const cuisine = String(hit.food_type || '').toLowerCase();
+  const diningStyle = String(hit.dining_style || '').toLowerCase();
+  const searchableText = `${cuisine} ${diningStyle}`;
+
+  const match = CUISINE_IMAGES.find((item) =>
+    item.match.some((keyword) => searchableText.includes(keyword))
+  );
+
+  return match?.url || DEFAULT_RESTAURANT_IMAGE;
 }
 
 function renderResults(results) {
