@@ -337,6 +337,7 @@ function applyLocation(location, fromBrowser = false) {
 
 helper.on('result', ({ results }) => {
   renderFacets(results);
+  syncExperienceChips();
   renderResults(results);
 });
 
@@ -365,8 +366,12 @@ document.addEventListener('click', (event) => {
   const quickButton = event.target.closest('[data-quick]');
   if (quickButton) applyMode(quickButton.dataset.quick);
 
-  const queryButton = event.target.closest('[data-query]');
-  if (queryButton) applyQuery(queryButton.dataset.query);
+  const experienceButton = event.target.closest('[data-experience]');
+  if (experienceButton) {
+    helper
+      .toggleFacetRefinement('experience_tags', experienceButton.dataset.experience)
+      .search();
+  }
 });
 
 els.clearFilters.addEventListener('click', () => {
@@ -380,6 +385,7 @@ els.clearFilters.addEventListener('click', () => {
   helper
     .setQuery('')
     .clearRefinements('food_type')
+    .clearRefinements('experience_tags')
     .setQueryParameter('numericFilters', [])
     .search();
 });
@@ -401,4 +407,15 @@ if ('geolocation' in navigator) {
   );
 } else {
   applyLocation(DEFAULT_LOCATION, false);
+}
+
+function syncExperienceChips() {
+  const selectedValues =
+    helper.state.disjunctiveFacetsRefinements.experience_tags || [];
+
+  document.querySelectorAll('[data-experience]').forEach((button) => {
+    const isActive = selectedValues.includes(button.dataset.experience);
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
 }
