@@ -197,20 +197,31 @@ function renderFacets(results) {
   const facetValues =
     results?.disjunctiveFacets?.find((facet) => facet.name === 'food_type')?.data || {};
 
-  const values = Object.entries(facetValues)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
+  const selectedValues =
+    helper.state.disjunctiveFacetsRefinements.food_type || [];
+
+  const entries = Object.entries(facetValues);
+
+  const selectedEntries = selectedValues.map((name) => [
+    name,
+    facetValues[name] || 0
+  ]);
+
+  const unselectedEntries = entries
+    .filter(([name]) => !selectedValues.includes(name))
+    .sort((a, b) => b[1] - a[1]);
+
+  const values = [...selectedEntries, ...unselectedEntries].slice(0, 8);
 
   els.facets.innerHTML = values.map(([name, count]) => {
-    const isRefined =
-      helper.hasRefinements('food_type') &&
-      helper.state.disjunctiveFacetsRefinements.food_type?.includes(name);
+    const isRefined = selectedValues.includes(name);
 
     return `
       <button
         type="button"
         class="facet ${isRefined ? 'is-active' : ''}"
         data-cuisine="${escapeHtml(name)}"
+        aria-pressed="${isRefined}"
       >
         <span>${escapeHtml(name)}</span>
         <span>${count}</span>
@@ -301,13 +312,14 @@ document.addEventListener('click', (event) => {
 els.clearFilters.addEventListener('click', () => {
   els.input.value = '';
   state.mode = 'nearby';
+
   document.querySelectorAll('.mode-tab').forEach((button) => {
     button.classList.toggle('is-active', button.dataset.mode === 'nearby');
   });
 
   helper
     .setQuery('')
-    .clearRefinements()
+    .clearRefinements('food_type')
     .setQueryParameter('numericFilters', [])
     .search();
 });
