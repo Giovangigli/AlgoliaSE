@@ -1,5 +1,3 @@
-
-
 const APP_ID = 'PYR170J174';
 const SEARCH_API_KEY = '6a5c8d1640aa86a80b6821bfaa1b6f7b';
 const INDEX_NAME = 'restaurants';
@@ -56,120 +54,6 @@ const CUISINE_IMAGES = [
 const DEFAULT_RESTAURANT_IMAGE =
   'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
 
-const client = algoliasearch(APP_ID, SEARCH_API_KEY);
-const helper = algoliasearchHelper(client, INDEX_NAME, {
-  hitsPerPage: 12,
-  disjunctiveFacets: ['food_type', 'experience_tags'],
-  aroundRadius: 'all',
-  getRankingInfo: true
-});
-
-const state = {
-  recipe: 'nearby',
-  location: DEFAULT_LOCATION,
-  hasBrowserLocation: false
-};
-
-const els = {
-  input: document.querySelector('#search-input'),
-  results: document.querySelector('#results'),
-  facets: document.querySelector('#cuisine-facets'),
-  meta: document.querySelector('#results-meta'),
-  title: document.querySelector('#results-title'),
-  geoStatus: document.querySelector('#geo-status'),
-  clearFilters: document.querySelector('#clear-filters'),
-  strategyCopy: document.querySelector('#strategy-copy')
-};
-
-function escapeHtml(value = '') {
-  return String(value).replace(/[&<>'"]/g, (char) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  }[char]));
-}
-
-function formatDistance(hit) {
-  const meters = hit?._rankingInfo?.geoDistance;
-  if (typeof meters !== 'number') return null;
-  return meters < 1000
-    ? `${Math.round(meters)}m away`
-    : `${(meters / 1000).toFixed(1)}km away`;
-}
-
-function getRecipe() {
-  return DISCOVERY_RECIPES[state.recipe] || DISCOVERY_RECIPES.nearby;
-}
-
-function explainHit(hit) {
-  const reasons = [];
-  const distance = formatDistance(hit);
-
-  if (distance) reasons.push(distance);
-  if (hit.food_type) reasons.push(`Matches ${hit.food_type}`);
-  if (Array.isArray(hit.experience_tags) && hit.experience_tags.length) {
-    reasons.push(`Intent signals: ${hit.experience_tags.slice(0, 2).join(', ')}`);
-  }
-  if (hit.stars_count) {
-    reasons.push(`${hit.stars_count} stars from ${hit.reviews_count || 0} reviews`);
-  }
-
-if (state.recipe === 'hiddenGems') {
-  reasons.push('High rating with lower review volume');
-} else if (state.recipe === 'clientDinner') {
-  reasons.push('Prioritized by rating confidence for business dining');
-} else if (state.recipe === 'dateNight') {
-  reasons.push('Matched to date-night intent');
-} else if (state.recipe === 'quickLunch') {
-  reasons.push('Matched to casual nearby lunch intent');
-} else {
-  reasons.push('Prioritized by proximity and relevance');
-}
-
-  return reasons.slice(0, 4);
-}
-
-function normalizeHits(hits = []) {
-  const copy = [...hits];
-
-  if (state.recipe === 'clientDinner') {
-    return copy.sort((a, b) =>
-      (b.stars_count || 0) - (a.stars_count || 0) ||
-      (b.reviews_count || 0) - (a.reviews_count || 0)
-    );
-  }
-
-  if (state.recipe === 'hiddenGems') {
-    return copy.sort((a, b) =>
-      Number(Boolean(b.is_hidden_gem)) - Number(Boolean(a.is_hidden_gem)) ||
-      (b.stars_count || 0) - (a.stars_count || 0) ||
-      (a.reviews_count || 0) - (b.reviews_count || 0)
-    );
-  }
-
-  return copy;
-}
-
-function getImageUrl(hit) {
-  const existingUrl = hit.image_url || hit.image || hit.picture_url;
-
-  if (existingUrl && existingUrl.startsWith('https://')) {
-    return existingUrl;
-  }
-
-  const cuisine = String(hit.food_type || '').toLowerCase();
-  const diningStyle = String(hit.dining_style || '').toLowerCase();
-  const searchableText = `${cuisine} ${diningStyle}`;
-
-  const match = CUISINE_IMAGES.find((item) =>
-    item.match.some((keyword) => searchableText.includes(keyword))
-  );
-
-  return match?.url || DEFAULT_RESTAURANT_IMAGE;
-}
-
 const DISCOVERY_RECIPES = {
   nearby: {
     label: 'Restaurants near you',
@@ -213,13 +97,133 @@ const DISCOVERY_RECIPES = {
   }
 };
 
+const client = algoliasearch(APP_ID, SEARCH_API_KEY);
+const helper = algoliasearchHelper(client, INDEX_NAME, {
+  hitsPerPage: 12,
+  disjunctiveFacets: ['food_type', 'experience_tags'],
+  aroundRadius: 'all',
+  getRankingInfo: true
+});
+
+const state = {
+  recipe: 'nearby',
+  location: DEFAULT_LOCATION,
+  hasBrowserLocation: false
+};
+
+const els = {
+  input: document.querySelector('#search-input'),
+  results: document.querySelector('#results'),
+  facets: document.querySelector('#cuisine-facets'),
+  meta: document.querySelector('#results-meta'),
+  title: document.querySelector('#results-title'),
+  geoStatus: document.querySelector('#geo-status'),
+  clearFilters: document.querySelector('#clear-filters'),
+  strategyCopy: document.querySelector('#strategy-copy')
+};
+
+function escapeHtml(value = '') {
+  return String(value).replace(/[&<>'"]/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[char]));
+}
+
+function formatDistance(hit) {
+  const meters = hit?._rankingInfo?.geoDistance;
+  if (typeof meters !== 'number') return null;
+
+  return meters < 1000
+    ? `${Math.round(meters)}m away`
+    : `${(meters / 1000).toFixed(1)}km away`;
+}
+
+function getRecipe() {
+  return DISCOVERY_RECIPES[state.recipe] || DISCOVERY_RECIPES.nearby;
+}
+
+function explainHit(hit) {
+  const reasons = [];
+  const distance = formatDistance(hit);
+
+  if (distance) reasons.push(distance);
+  if (hit.food_type) reasons.push(`Matches ${hit.food_type}`);
+
+  if (Array.isArray(hit.experience_tags) && hit.experience_tags.length) {
+    reasons.push(`Intent signals: ${hit.experience_tags.slice(0, 2).join(', ')}`);
+  }
+
+  if (hit.stars_count) {
+    reasons.push(`${hit.stars_count} stars from ${hit.reviews_count || 0} reviews`);
+  }
+
+  if (state.recipe === 'hiddenGems') {
+    reasons.push('High rating with lower review volume');
+  } else if (state.recipe === 'clientDinner') {
+    reasons.push('Prioritized by rating confidence for business dining');
+  } else if (state.recipe === 'dateNight') {
+    reasons.push('Matched to date-night intent');
+  } else if (state.recipe === 'quickLunch') {
+    reasons.push('Matched to casual nearby lunch intent');
+  } else {
+    reasons.push('Prioritized by proximity and relevance');
+  }
+
+  return reasons.slice(0, 4);
+}
+
+function normalizeHits(hits = []) {
+  const copy = [...hits];
+
+  if (state.recipe === 'clientDinner') {
+    return copy.sort((a, b) =>
+      (b.stars_count || 0) - (a.stars_count || 0) ||
+      (b.reviews_count || 0) - (a.reviews_count || 0)
+    );
+  }
+
+  if (state.recipe === 'hiddenGems') {
+    return copy.sort((a, b) =>
+      Number(Boolean(b.is_hidden_gem)) - Number(Boolean(a.is_hidden_gem)) ||
+      (b.stars_count || 0) - (a.stars_count || 0) ||
+      (a.reviews_count || 0) - (b.reviews_count || 0)
+    );
+  }
+
+  return copy;
+}
+
+function getImageUrl(hit) {
+  const existingUrl = hit.image_url || hit.image || hit.picture_url;
+
+  if (existingUrl && existingUrl.startsWith('https://')) {
+    return existingUrl;
+  }
+
+  const cuisine = String(hit.food_type || '').toLowerCase();
+  const diningStyle = String(hit.dining_style || '').toLowerCase();
+  const searchableText = `${cuisine} ${diningStyle}`;
+
+  const match = CUISINE_IMAGES.find((item) =>
+    item.match.some((keyword) => searchableText.includes(keyword))
+  );
+
+  return match?.url || DEFAULT_RESTAURANT_IMAGE;
+}
+
 function renderResults(results) {
   const hits = normalizeHits(Array.isArray(results?.hits) ? results.hits : []);
+  const recipe = getRecipe();
 
-const recipe = getRecipe();
-els.title.textContent = recipe.label;
-els.strategyCopy.textContent = recipe.strategy;
-els.meta.textContent = `${results?.nbHits?.toLocaleString?.() || 0} restaurants · ${results?.processingTimeMS || 0}ms · ${state.hasBrowserLocation ? 'browser location' : state.location.label}`;
+  els.title.textContent = recipe.label;
+  els.strategyCopy.textContent = recipe.strategy;
+  els.meta.textContent =
+    `${results?.nbHits?.toLocaleString?.() || 0} restaurants · ` +
+    `${results?.processingTimeMS || 0}ms · ` +
+    `${state.hasBrowserLocation ? 'browser location' : state.location.label}`;
 
   if (!hits.length) {
     els.results.innerHTML = `
@@ -248,8 +252,12 @@ els.meta.textContent = `${results?.nbHits?.toLocaleString?.() || 0} restaurants 
       : '';
 
     const highlightedName = hit?._highlightResult?.name?.value || escapeHtml(hit.name || 'Restaurant');
+
     const tags = Array.isArray(hit.experience_tags) && hit.experience_tags.length
-      ? `<div class="tag-row">${hit.experience_tags.slice(0, 3).map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>`
+      ? `<div class="tag-row">${hit.experience_tags
+          .slice(0, 3)
+          .map((tag) => `<span>${escapeHtml(tag)}</span>`)
+          .join('')}</div>`
       : '';
 
     return `
@@ -336,6 +344,17 @@ function renderFacets(results) {
   }).join('');
 }
 
+function syncExperienceChips() {
+  const selectedValues =
+    helper.state.disjunctiveFacetsRefinements.experience_tags || [];
+
+  document.querySelectorAll('[data-experience]').forEach((button) => {
+    const isActive = selectedValues.includes(button.dataset.experience);
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+}
+
 function applyRecipe(recipeName) {
   const recipe = DISCOVERY_RECIPES[recipeName] || DISCOVERY_RECIPES.nearby;
   state.recipe = recipeName;
@@ -379,6 +398,7 @@ helper.on('result', ({ results }) => {
 
 helper.on('error', (error) => {
   console.error('Algolia error:', error);
+
   els.results.innerHTML = `
     <div class="empty-state">
       Search error: ${escapeHtml(error.message || 'Unknown error')}
@@ -392,7 +412,9 @@ els.input.addEventListener('input', (event) => {
 
 document.addEventListener('click', (event) => {
   const recipeButton = event.target.closest('[data-recipe]');
-  if (recipeButton) applyRecipe(recipeButton.dataset.recipe);
+  if (recipeButton) {
+    applyRecipe(recipeButton.dataset.recipe);
+  }
 
   const cuisineButton = event.target.closest('[data-cuisine]');
   if (cuisineButton) {
@@ -400,7 +422,9 @@ document.addEventListener('click', (event) => {
   }
 
   const quickButton = event.target.closest('[data-quick]');
-  if (quickButton) applyRecipe(quickButton.dataset.quick);
+  if (quickButton) {
+    applyRecipe(quickButton.dataset.quick);
+  }
 
   const experienceButton = event.target.closest('[data-experience]');
   if (experienceButton) {
@@ -412,10 +436,10 @@ document.addEventListener('click', (event) => {
 
 els.clearFilters.addEventListener('click', () => {
   els.input.value = '';
-  state.mode = 'nearby';
+  state.recipe = 'nearby';
 
-  document.querySelectorAll('.mode-tab').forEach((button) => {
-    button.classList.toggle('is-active', button.dataset.mode === 'nearby');
+  document.querySelectorAll('[data-recipe]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.recipe === 'nearby');
   });
 
   helper
@@ -443,15 +467,4 @@ if ('geolocation' in navigator) {
   );
 } else {
   applyLocation(DEFAULT_LOCATION, false);
-}
-
-function syncExperienceChips() {
-  const selectedValues =
-    helper.state.disjunctiveFacetsRefinements.experience_tags || [];
-
-  document.querySelectorAll('[data-experience]').forEach((button) => {
-    const isActive = selectedValues.includes(button.dataset.experience);
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
-  });
 }
