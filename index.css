@@ -87,6 +87,22 @@ h1 { margin: 0; font-size: clamp(36px, 6vw, 64px); line-height: .95; max-width: 
 .results-header p { margin: 0; color: var(--muted); }
 .results-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 
+.strategy-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.strategy-panel__title {
+  color: var(--text);
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
 .card {
   display: grid;
   grid-template-columns: 170px 1fr;
