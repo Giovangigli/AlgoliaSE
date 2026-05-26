@@ -105,6 +105,25 @@ const DISCOVERY_RECIPES = {
   }
 };
 
+const CUISINE_ORDER = [
+  'Italian',
+  'American',
+  'Contemporary American',
+  'Seafood',
+  'French',
+  'Japanese',
+  'Mexican',
+  'Mediterranean',
+  'Steakhouse',
+  'Asian',
+  'Chinese',
+  'Indian',
+  'Spanish',
+  'Thai',
+  'Wine Bar',
+  'Bar'
+];
+
 const client = algoliasearch(APP_ID, SEARCH_API_KEY);
 const helper = algoliasearchHelper(client, INDEX_NAME, {
   hitsPerPage: 12,
@@ -333,21 +352,36 @@ function renderFacets(results) {
   const selectedValues =
     helper.state.disjunctiveFacetsRefinements.food_type || [];
 
-  const entries = Object.entries(facetValues);
-
-  const selectedEntries = selectedValues.map((name) => [
-    name,
-    facetValues[name] || 0
+  const allFacetNames = new Set([
+    ...CUISINE_ORDER,
+    ...selectedValues,
+    ...Object.keys(facetValues)
   ]);
 
-  const unselectedEntries = entries
-    .filter(([name]) => !selectedValues.includes(name))
-    .sort((a, b) => b[1] - a[1]);
+  const values = Array.from(allFacetNames)
+    .sort((a, b) => {
+      const aIndex = CUISINE_ORDER.indexOf(a);
+      const bIndex = CUISINE_ORDER.indexOf(b);
 
-  const values = [...selectedEntries, ...unselectedEntries].slice(0, 8);
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
 
-  els.facets.innerHTML = values.map(([name, count]) => {
+      if (aIndex !== -1) {
+        return -1;
+      }
+
+      if (bIndex !== -1) {
+        return 1;
+      }
+
+      return a.localeCompare(b);
+    });
+
+  els.facets.innerHTML = values.map((name) => {
+    const count = facetValues[name] || 0;
     const isRefined = selectedValues.includes(name);
+    const isDisabled = count === 0 && !isRefined;
 
     return `
       <button
@@ -355,6 +389,7 @@ function renderFacets(results) {
         class="facet ${isRefined ? 'is-active' : ''}"
         data-cuisine="${escapeHtml(name)}"
         aria-pressed="${isRefined}"
+        ${isDisabled ? 'disabled' : ''}
       >
         <span>${escapeHtml(name)}</span>
         <span>${count}</span>
