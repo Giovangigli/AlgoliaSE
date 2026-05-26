@@ -94,7 +94,15 @@ const DISCOVERY_RECIPES = {
     numericFilters: ['stars_count>=4.4', 'reviews_count<=90', 'reviews_count>0'],
     strategy:
       'Hidden Gems surfaces high-rated restaurants with lower review volume to avoid ranking only by popularity.'
-  }
+  },
+  wineBar: {
+  label: 'Wine bars nearby',
+  query: 'wine bar drinks',
+  experienceTags: ['wine bar'],
+  numericFilters: [],
+  strategy:
+    'Wine Bar translates drink-led intent into an experience facet and discovery query while keeping geo-context and Algolia relevance active.'
+}
 };
 
 const client = algoliasearch(APP_ID, SEARCH_API_KEY);
@@ -344,17 +352,6 @@ function renderFacets(results) {
   }).join('');
 }
 
-function syncExperienceChips() {
-  const selectedValues =
-    helper.state.disjunctiveFacetsRefinements.experience_tags || [];
-
-  document.querySelectorAll('[data-experience]').forEach((button) => {
-    const isActive = selectedValues.includes(button.dataset.experience);
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
-  });
-}
-
 function applyRecipe(recipeName) {
   const recipe = DISCOVERY_RECIPES[recipeName] || DISCOVERY_RECIPES.nearby;
   state.recipe = recipeName;
@@ -420,19 +417,6 @@ document.addEventListener('click', (event) => {
   if (cuisineButton) {
     helper.toggleFacetRefinement('food_type', cuisineButton.dataset.cuisine).search();
   }
-
-  const quickButton = event.target.closest('[data-quick]');
-  if (quickButton) {
-    applyRecipe(quickButton.dataset.quick);
-  }
-
-  const experienceButton = event.target.closest('[data-experience]');
-  if (experienceButton) {
-    helper
-      .toggleFacetRefinement('experience_tags', experienceButton.dataset.experience)
-      .search();
-  }
-});
 
 els.clearFilters.addEventListener('click', () => {
   els.input.value = '';
