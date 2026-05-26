@@ -4,15 +4,29 @@ Hi George,
 
 Happy to help.
 
-A record is one searchable item in an Algolia index. In your case, a record could be one product, article, restaurant, or user profile. Each record is made of attributes, such as name, category, price, rating, or location.
+A record is one searchable object in an Algolia index. In your case, one restaurant would usually be one record. Each record contains attributes such as the restaurant name, cuisine type, location, rating, review count, price range, and payment options.
 
-Indexing is the process of sending those records to Algolia so they can be searched quickly. During indexing, Algolia structures the data for fast retrieval, typo tolerance, ranking, faceting, and filtering.
+Indexing is the process of sending those records to Algolia so they can be searched quickly. During indexing, Algolia prepares the data for fast retrieval, filtering, ranking, and typo-tolerant search.
 
-For Custom Ranking, I would recommend using business metrics that indicate which records should appear higher when several results are equally relevant. Common examples include popularity, conversion rate, number of reviews, average rating, sales volume, margin, availability, or freshness.
+Custom Ranking is used to break ties between otherwise relevant results. Good custom ranking metrics are business or quality signals that should influence ordering after textual relevance has been considered.
 
-The key point is that Custom Ranking should support your business goals. For example, for restaurants, a sensible ranking could use rating, number of reviews, and distance. For ecommerce, it might use conversion rate, inventory availability, and sales volume.
+For restaurants, useful custom ranking metrics could include:
 
-Best,
+- Average rating
+- Number of reviews
+- Popularity or booking volume
+- Availability
+- Price tier, if the business wants to promote a certain segment
+
+Distance should usually be handled through Algolia geo-search rather than Custom Ranking.
+
+I would also be happy to walk through these concepts live and answer any follow-up questions. I’m available:
+
+- Tuesday at 10:00
+- Wednesday at 14:30
+- Thursday at 11:00
+
+Let me know what works best for you,
 Antoine
 
 ---
@@ -21,13 +35,15 @@ Question 2
 
 Hi Matt,
 
-Thanks for sharing this. I understand why that is frustrating, especially if clearing or deleting indexes is part of your iteration workflow.
+Thanks for the direct feedback. I understand the frustration, especially if you are clearing or deleting indexes frequently while iterating.
 
-The dashboard update was designed to make common workflows more consistent, but your feedback is useful because it highlights a power-user use case where extra clicks slow you down.
+For repeated development workflows, the fastest path is usually to move those actions into the API or a small script rather than relying only on the dashboard. That lets you automate index clearing, settings updates, and record uploads in one repeatable workflow.
 
-For now, if you need to clear or delete indexes frequently, the fastest option may be to use the Algolia API or CLI so you can run those actions directly from your development workflow instead of navigating the dashboard each time.
+I would recommend using separate indexes such dev, staging and production. That way, you can iterate quickly on the development index while keeping production protected.
 
-I’ll also share this feedback with the product team, specifically that clear/delete index actions are now harder to access for users who iterate heavily on indexing.
+For destructive actions like deleting an index, the dashboard adding friction is intentional because these actions can have production impact. But for your use case, we can remove most of that friction by setting up an API-based workflow.
+
+The next best step would be to jump on a short call and tackle the API workflow directly. We can review your current iteration process, identify the repeated actions, and turn them into a script so you do not need to rely on the dashboard for every reset. Feel free to send me a couple of timeslots that work well for you.
 
 Best,
 Antoine
@@ -38,17 +54,25 @@ Question 3
 
 Hi Leo,
 
-The amount of development work depends on how customized you want the experience to be, but the high-level process is straightforward.
+No, Algolia is designed to be easy to integrate. For a standard implementation, the development effort is usually low, and a lot can be done with low-code configuration once the data structure is clear.
 
-At a high level, you would:
+The high-level process is:
 
-1. Prepare your data: decide which objects should be searchable and which attributes matter, such as title, category, price, rating, or location.
-2. Send those records to an Algolia index.
-3. Configure relevance: define searchable attributes, filters/facets, ranking, typo tolerance, and any business ranking metrics.
-4. Build the search UI: add a search box, results, filters, and any sorting or discovery experience you need.
-5. Test and iterate: validate that users get relevant results quickly and adjust ranking based on real behavior.
+1. Prepare your data: Decide what each searchable record should contain. For example, for a restaurant website, each record might include name, cuisine, location, rating, price range, and availability.
 
-For a standard implementation, Algolia provides client libraries and UI tools that make this relatively quick. For a highly tailored experience, you can use the lower-level APIs and helper libraries to keep full control over the UX.
+2. Send the records to Algolia: Use Algolia’s API or one of the API clients to index your records.
+
+3. Configure relevance: Define searchable attributes, facets, custom ranking, typo tolerance, and geo-search settings.
+
+4. Build the frontend experience: Add a search box, render results, and connect filters such as cuisine, location, or price.
+
+5. Test and iterate: Try real user queries, inspect weak results, and adjust ranking or data structure where needed.
+
+The search experience itself can be implemented quickly. The main work is usually preparing clean data and tuning relevance so the experience matches user intent.
+
+We are here to help with that process, from the initial setup to relevance tuning and launch readiness.
+
+Let’s schedule a follow-up to discuss your website, data structure, and target search experience. When are you available?
 
 Best,
 Antoine
