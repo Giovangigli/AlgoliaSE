@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>Restaurant Discovery - Algolia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="./assets/favicon.ico" type="image/png" />
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">Restaurant reservation demo</p>
+          <h1>Find the right table faster.</h1>
+          <p class="hero__copy">
+            Instant restaurant discovery using textual relevance, cuisine facets,
+            geo-context, discovery modes and explainable ranking.
+          </p>
+        </div>
+
+        <div class="geo-status" id="geo-status">Using default location</div>
+      </section>
+
+      <section class="search-panel">
+        <label class="search-box" for="search-input">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search sushi, Italian, date night, wine bar..."
+            autocomplete="off"
+            autofocus
+          />
+        </label>
+
+        <div class="mode-tabs" aria-label="Discovery mode">
+          <button type="button" class="mode-tab is-active" data-mode="nearby">Nearby</button>
+          <button type="button" class="mode-tab" data-mode="topRated">Top rated</button>
+          <button type="button" class="mode-tab" data-mode="hiddenGems">Hidden gems</button>
+        </div>
+      </section>
+
+      <section class="layout">
+        <aside class="filters" aria-label="Search filters">
+          <div class="filter-block">
+            <div class="filter-title">Cuisine</div>
+            <div id="cuisine-facets" class="facet-list"></div>
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-title">Experience</div>
+            <button type="button" class="chip" data-query="date night">Date night</button>
+            <button type="button" class="chip" data-query="wine bar">Wine bar</button>
+            <button type="button" class="chip" data-quick="topRated">4.5+ stars</button>
+            <button type="button" class="chip" data-quick="hiddenGems">Hidden gems</button>
+          </div>
+
+          <button type="button" id="clear-filters" class="clear-button">Clear filters</button>
+        </aside>
+
+        <section class="results-area">
+          <div class="results-header">
+            <div>
+              <h2 id="results-title">Restaurants near you</h2>
+              <p id="results-meta">Loading results...</p>
+            </div>
+          </div>
+
+          <div id="results" class="results-grid">
+            <div class="empty-state">Loading restaurants...</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

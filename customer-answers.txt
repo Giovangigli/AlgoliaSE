@@ -1,0 +1,54 @@
+Question 1
+
+Hi George,
+
+Happy to help.
+
+A record is one searchable item in an Algolia index. In your case, a record could be one product, article, restaurant, or user profile. Each record is made of attributes, such as name, category, price, rating, or location.
+
+Indexing is the process of sending those records to Algolia so they can be searched quickly. During indexing, Algolia structures the data for fast retrieval, typo tolerance, ranking, faceting, and filtering.
+
+For Custom Ranking, I would recommend using business metrics that indicate which records should appear higher when several results are equally relevant. Common examples include popularity, conversion rate, number of reviews, average rating, sales volume, margin, availability, or freshness.
+
+The key point is that Custom Ranking should support your business goals. For example, for restaurants, a sensible ranking could use rating, number of reviews, and distance. For ecommerce, it might use conversion rate, inventory availability, and sales volume.
+
+Best,
+Antoine
+
+---
+
+Question 2
+
+Hi Matt,
+
+Thanks for sharing this. I understand why that is frustrating, especially if clearing or deleting indexes is part of your iteration workflow.
+
+The dashboard update was designed to make common workflows more consistent, but your feedback is useful because it highlights a power-user use case where extra clicks slow you down.
+
+For now, if you need to clear or delete indexes frequently, the fastest option may be to use the Algolia API or CLI so you can run those actions directly from your development workflow instead of navigating the dashboard each time.
+
+I’ll also share this feedback with the product team, specifically that clear/delete index actions are now harder to access for users who iterate heavily on indexing.
+
+Best,
+Antoine
+
+---
+
+Question 3
+
+Hi Leo,
+
+The amount of development work depends on how customized you want the experience to be, but the high-level process is straightforward.
+
+At a high level, you would:
+
+1. Prepare your data: decide which objects should be searchable and which attributes matter, such as title, category, price, rating, or location.
+2. Send those records to an Algolia index.
+3. Configure relevance: define searchable attributes, filters/facets, ranking, typo tolerance, and any business ranking metrics.
+4. Build the search UI: add a search box, results, filters, and any sorting or discovery experience you need.
+5. Test and iterate: validate that users get relevant results quickly and adjust ranking based on real behavior.
+
+For a standard implementation, Algolia provides client libraries and UI tools that make this relatively quick. For a highly tailored experience, you can use the lower-level APIs and helper libraries to keep full control over the UX.
+
+Best,
+Antoine
