@@ -34,6 +34,7 @@ async function main() {
     ],
     attributesForFaceting: [
       'searchable(food_type)',
+      'searchable(experience_tags)',
       'payment_options',
       'price_range',
       'dining_style',
